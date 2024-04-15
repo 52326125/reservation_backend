@@ -7,10 +7,12 @@ import { UserController } from './user.controller';
 import { UserService } from './user.service';
 import { UserRepository } from './repository/user.repository';
 import { EmailModule } from 'src/email/email.module';
+import { RoleRepository } from './repository/role.repository';
 
 @Module({
   controllers: [UserController],
-  providers: [UserService, UserRepository],
+  providers: [UserService, UserRepository, RoleRepository],
+  exports: [RoleRepository],
   imports: [TypeOrmModule.forFeature([User, Role, Permission]), EmailModule],
 })
 export class UserModule {}

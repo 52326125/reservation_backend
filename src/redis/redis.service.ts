@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { RedisClientType } from 'redis';
-import { REDIS_TOKEN } from 'src/const';
+import { REDIS_TOKEN } from 'src/const/token';
 
 @Injectable()
 export class RedisService {
@@ -17,5 +17,9 @@ export class RedisService {
     if (ttl) {
       this.redisClient.expire(key, ttl);
     }
+  }
+
+  async delete(key: string) {
+    await this.redisClient.del(key);
   }
 }

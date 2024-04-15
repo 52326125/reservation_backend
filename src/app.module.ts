@@ -4,10 +4,11 @@ import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserModule } from './user/user.module';
-import { APP_PIPE } from '@nestjs/core';
+import { APP_GUARD, APP_PIPE } from '@nestjs/core';
 import { RedisModule } from './redis/redis.module';
 import { EmailModule } from './email/email.module';
 import { JwtModule } from '@nestjs/jwt';
+import { LoginGuard } from './guard/login.guard';
 
 @Module({
   imports: [
@@ -43,6 +44,10 @@ import { JwtModule } from '@nestjs/jwt';
     {
       provide: APP_PIPE,
       useFactory: () => new ValidationPipe({ transform: true }),
+    },
+    {
+      provide: APP_GUARD,
+      useClass: LoginGuard,
     },
   ],
 })

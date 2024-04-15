@@ -2,7 +2,7 @@ import { Global, Module } from '@nestjs/common';
 import { RedisService } from './redis.service';
 import { createClient } from 'redis';
 import { ConfigService } from '@nestjs/config';
-import { REDIS_TOKEN } from 'src/const';
+import { REDIS_TOKEN } from 'src/const/token';
 
 @Global()
 @Module({

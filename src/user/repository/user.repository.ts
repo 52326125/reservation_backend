@@ -11,4 +11,8 @@ export class UserRepository extends Repository<User> {
   async findByUsername(username: string) {
     return await this.findOneBy([{ username }]);
   }
+
+  async findByEmail(email: string) {
+    return await this.findOneBy([{ email }]);
+  }
 }

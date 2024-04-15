@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Resend } from 'resend';
-import { EMAIL_TOKEN } from 'src/const';
+import { EMAIL_TOKEN } from 'src/const/token';
 
 @Injectable()
 export class EmailService {

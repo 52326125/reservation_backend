@@ -7,6 +7,7 @@ import { VerifyEmailDto } from './dto/verifyEmail.dto';
 import { RedisService } from 'src/redis/redis.service';
 import { JwtService } from '@nestjs/jwt';
 import { SignInDto } from './dto/signIn.dto';
+import { ModifyPasswordDto } from './dto/modifyPassword.dto';
 
 @Injectable()
 export class UserService {
@@ -21,20 +22,32 @@ export class UserService {
     return await hash(password, 10);
   }
 
+  async verifyEmail(email: string, verify_code: string) {
+    const redisKey = `verify_${email}`;
+    const redisVerifyCode = await this.redisService.get(redisKey);
+
+    if (!redisVerifyCode || redisVerifyCode !== verify_code) {
+      throw new BadRequestException('Verify code error');
+    }
+    await this.redisService.delete(redisKey);
+  }
+
   async signIn(signInDto: SignInDto) {
     const foundUser = await this.userRepo.findByUsername(signInDto.username);
-    const bcryptPassword = await this.bcryptPassword(signInDto.password);
 
-    if (!foundUser || (await compare(bcryptPassword, foundUser.password))) {
+    if (
+      !foundUser ||
+      !(await compare(signInDto.password, foundUser.password))
+    ) {
       throw new BadRequestException('Invalid username or password');
     }
 
     const refreshToken = this.jwtService.sign(
-      { username: foundUser.username },
+      { username: foundUser.username, roles: foundUser.roles },
       { expiresIn: '30d' },
     );
     const accessToken = this.jwtService.sign(
-      { username: foundUser.username },
+      { username: foundUser.username, roles: foundUser.roles },
       { expiresIn: '1h' },
     );
 
@@ -55,13 +68,7 @@ export class UserService {
       throw new BadRequestException('username already exists');
     }
 
-    const redisVerifyCode = await this.redisService.get(
-      `sign_up_verify_${signUpDto.email}`,
-    );
-
-    if (!redisVerifyCode || redisVerifyCode !== signUpDto.verify_code) {
-      throw new BadRequestException('Verify code error');
-    }
+    await this.verifyEmail(signUpDto.email, signUpDto.verify_code);
 
     const bcryptPassword = await this.bcryptPassword(signUpDto.password);
     const user = this.userRepo.create({
@@ -78,7 +85,7 @@ export class UserService {
 
   async sendVerifyCodeEmail(verifyEmailDto: VerifyEmailDto) {
     const { email } = verifyEmailDto;
-    const redisKey = `sign_up_verify_${email}`;
+    const redisKey = `verify_${email}`;
     const livedVerifyCode = await this.redisService.get(redisKey);
 
     if (livedVerifyCode) {
@@ -88,5 +95,23 @@ export class UserService {
     const verifyCode = Math.random().toString().slice(2, 8);
     await this.redisService.set(redisKey, verifyCode, 5 * 60);
     this.emailService.sendSignUpVerify(email, verifyCode);
+  }
+
+  async modifyPassword(modifyPasswordDto: ModifyPasswordDto) {
+    const foundUser = await this.userRepo.findByEmail(modifyPasswordDto.email);
+    if (!foundUser) {
+      throw new BadRequestException('email not found');
+    }
+
+    await this.verifyEmail(
+      modifyPasswordDto.email,
+      modifyPasswordDto.verify_code,
+    );
+
+    const bcryptPassword = await this.bcryptPassword(
+      modifyPasswordDto.password,
+    );
+    foundUser.password = bcryptPassword;
+    this.userRepo.save(foundUser);
   }
 }

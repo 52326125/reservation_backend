@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { EmailService } from './email.service';
-import { EMAIL_TOKEN } from 'src/const';
+import { EMAIL_TOKEN } from 'src/const/token';
 import { ConfigService } from '@nestjs/config';
 import { Resend } from 'resend';
 
